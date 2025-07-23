@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import "./LoginPage.css";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
+
 export default function LoginPage({ onLogin }) {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
@@ -16,7 +18,7 @@ export default function LoginPage({ onLogin }) {
     setError("");
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5001/api/auth/login", { userId, password });
+      const res = await axios.post(`${API_URL}/api/auth/login`, { userId, password });
       localStorage.setItem("token", res.data.token);
       onLogin(res.data.userId);
     } catch (err) {

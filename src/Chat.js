@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import axios from "axios";
 
-const SOCKET_SERVER_URL = process.env.REACT_APP_SOCKET_SERVER_URL || "http://localhost:5001"; // Adjust if needed
-const API_SERVER_URL = process.env.REACT_APP_API_SERVER_URL || "http://localhost:5001"; // Adjust if needed
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
 
 export default function Chat({ userId }) {
   const [messages, setMessages] = useState([]);
@@ -21,7 +20,7 @@ export default function Chat({ userId }) {
     // Fetch existing messages from server
     const fetchMessages = async () => {
       try {
-        const response = await axios.get(`${API_SERVER_URL}/api/messages/${roomId}`);
+        const response = await axios.get(`${API_URL}/api/messages/${roomId}`);
         setMessages(response.data);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
@@ -31,7 +30,7 @@ export default function Chat({ userId }) {
     fetchMessages();
 
     // Connect to socket server
-    socketRef.current = io(SOCKET_SERVER_URL, {
+    socketRef.current = io(API_URL, {
       transports: ['websocket', 'polling'],
     });
 
