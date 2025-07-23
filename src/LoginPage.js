@@ -43,7 +43,8 @@ export default function LoginPage({ onLogin }) {
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
         placeholder="User ID"
-        autoComplete="username"
+        type="password"
+        autoComplete="off"
         onKeyDown={handleKeyDown}
         disabled={loading}
       />

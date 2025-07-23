@@ -73,7 +73,7 @@ export default function Chat({ userId }) {
 
   return (
     <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
-      <h2>Live Chat - User: {userId}</h2>
+      <h2>Live Chat</h2>
       <div
         style={{
           border: "1px solid #ccc",
@@ -81,14 +81,31 @@ export default function Chat({ userId }) {
           overflowY: "auto",
           padding: 10,
           marginBottom: 10,
-          backgroundColor: "#f9f9f9",
+          backgroundColor: "#f0f0f0",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        {messages.map((msg, index) => (
-          <div key={index} style={{ marginBottom: 8 }}>
-            <strong>{msg.sender}:</strong> {msg.content}
-          </div>
-        ))}
+        {messages.map((msg, index) => {
+          const isCurrentUser = msg.sender === userId;
+          return (
+            <div
+              key={msg._id || index} // Use message ID for a stable key
+              style={{
+                alignSelf: isCurrentUser ? "flex-end" : "flex-start",
+                backgroundColor: isCurrentUser ? "#dcf8c6" : "#ffffff",
+                borderRadius: "7px",
+                padding: "8px 12px",
+                marginBottom: 8,
+                maxWidth: "80%",
+                wordWrap: "break-word",
+                boxShadow: "0 1px 1px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              {msg.content}
+            </div>
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
       <input
