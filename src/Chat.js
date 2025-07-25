@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
+import { socket } from "./socket";
 import axios from "axios";
+import "./Chat.css";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5001";
 
 export default function Chat({ userId }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const socketRef = useRef();
   const messagesEndRef = useRef(null);
   const roomId = "global_chat_room";
+
+  // New state for draggable position
+  // Removed draggable position state and refs as dragging is disabled
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -21,7 +24,9 @@ export default function Chat({ userId }) {
     const fetchMessages = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/messages/${roomId}`);
-        setMessages(response.data);
+        // Sort messages by timestamp ascending to ensure continuous flow
+        const sortedMessages = response.data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        setMessages(sortedMessages);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
       }
@@ -29,24 +34,19 @@ export default function Chat({ userId }) {
 
     fetchMessages();
 
-    // Connect to socket server
-    socketRef.current = io(API_URL, {
-      transports: ['websocket', 'polling'],
-    });
-
     // Join the chat room
-    socketRef.current.emit("join_room", roomId);
+    socket.emit("join_room", roomId);
 
     // Listen for incoming messages
-    socketRef.current.on("receive_message", (message) => {
+    socket.on("receive_message", (message) => {
       console.log("Received message via socket:", message);
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     // Cleanup on unmount
     return () => {
-      socketRef.current.off("receive_message");
-      socketRef.current.disconnect();
+      socket.off("receive_message");
+      // Do not disconnect shared socket instance here
     };
   }, []);
 
@@ -60,7 +60,7 @@ export default function Chat({ userId }) {
     };
 
     // Emit message to server
-    socketRef.current.emit("send_message", messageData);
+    socket.emit("send_message", messageData);
 
     setInput("");
   };
@@ -71,54 +71,44 @@ export default function Chat({ userId }) {
     }
   };
 
+  // Mouse event handlers for dragging
+  // Removed dragging handlers as dragging is disabled for centering
+
   return (
-    <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
-      <h2>Live Chat</h2>
-      <div
-        style={{
-          border: "1px solid #ccc",
-          height: 300,
-          overflowY: "auto",
-          padding: 10,
-          marginBottom: 10,
-          backgroundColor: "#f0f0f0",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {messages.map((msg, index) => {
-          const isCurrentUser = msg.sender === userId;
-          return (
-            <div
-              key={msg._id || index} // Use message ID for a stable key
-              style={{
-                alignSelf: isCurrentUser ? "flex-end" : "flex-start",
-                backgroundColor: isCurrentUser ? "#dcf8c6" : "#ffffff",
-                borderRadius: "7px",
-                padding: "8px 12px",
-                marginBottom: 8,
-                maxWidth: "80%",
-                wordWrap: "break-word",
-                boxShadow: "0 1px 1px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              {msg.content}
-            </div>
-          );
-        })}
-        <div ref={messagesEndRef} />
+    <div className="chat-wrapper">
+      <div className="chat-container">
+        <h2 className="chat-header">Live Chat</h2>
+        <div className="messages">
+          {messages.map((msg, index) => {
+            const isCurrentUser = msg.sender === userId;
+            const messageTime = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString() : "";
+            return (
+              <div
+                key={msg._id || index}
+                className={`message ${isCurrentUser ? "current-user" : "other-user"}`}
+                style={{ animation: "fadeIn 0.3s ease" }}
+              >
+                <div className="sender-info">{isCurrentUser ? "You" : (msg.sender || "Unknown")}</div>
+                <div>{msg.content}</div>
+                {messageTime && <div className="timestamp">{messageTime}</div>}
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+        <div className="input-container">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button onClick={handleSend} disabled={input.trim() === ""}>
+            Send
+          </button>
+        </div>
       </div>
-      <input
-        type="text"
-        placeholder="Type your message..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        style={{ width: "80%", padding: 8 }}
-      />
-      <button onClick={handleSend} style={{ padding: "8px 16px", marginLeft: 8 }}>
-        Send
-      </button>
     </div>
   );
 }

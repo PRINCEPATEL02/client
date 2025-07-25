@@ -1,17 +1,10 @@
-import React, { useState } from "react";
-import LoginPage from "./LoginPage";
+import React from "react";
 import Chat from "./Chat";
 
 export default function App() {
-  const [userId, setUserId] = useState(null);
+  // Directly render Chat component without login
+  // Passing a more specific userId
+  const defaultUserId = "guest123";
 
-  const handleLogin = (loggedInUserId) => {
-    setUserId(loggedInUserId);
-  };
-
-  if (!userId) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
-
-  return <Chat userId={userId} />;
+  return <Chat userId={defaultUserId} />;
 }
